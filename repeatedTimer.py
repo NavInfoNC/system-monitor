@@ -32,7 +32,7 @@ class RepeatedTimer:
         return self.__procStop()
 
 if __name__ == '__main__':
-    print "starting..."
+    print("starting...")
     rt = RepeatedTimer(1, "server_manager")
     rt1 = RepeatedTimer(2, "java")
     try:

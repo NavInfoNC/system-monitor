@@ -1,44 +1,44 @@
 #!/usr/bin/python
-from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+#from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+from flup.server.fcgi import WSGIServer
 from taskQueue import TaskQueue
 from threading import Thread
+from cgi import parse_qs
 import threading
-import urlparse
+import platform
 import psutil
 import json
 import time
 
-PORT_NUMBER = 9010
-
-class httpCallback(BaseHTTPRequestHandler):
-    def do_GET(self):
+def webapp(environ, start_response):
+    method = environ.get('REQUEST_METHOD')
+    content = "404 not found"
+    if method == 'GET':
         response = {}
-        parseResult = urlparse.urlparse(self.path)
-        query = urlparse.parse_qs(parseResult.query)
-        if self.path.startswith("/performance/start_collecting"):
+        query = parse_qs(environ.get('QUERY_STRING'))
+        path = environ.get('PATH_INFO')
+        print("method:%s, query:%s, path:%s" %(method, query, path))
+        if path.startswith("/performance/start_collecting") and query:
             task = {}
-            duration = query.get('duration')[0]
-            interval = query.get('interval')[0]
-            sha = query.get('sha')[0]
-            server = query.get('server')[0]
+            duration = query.get('duration')
+            interval = query.get('interval')
+            sha = query.get('sha')
+            server = query.get('server')
             print("%s,%s,%s,%s" % (server, duration, interval, sha))
-            if duration and interval and interval and server:
+            if duration and interval and sha and server:
                 response.setdefault("result", "success")
                 ts = time.time()
                 task.setdefault('startTimestamp', ts)
-                task.setdefault('stopTimestamp', ts + int(duration))
-                task.setdefault('duration', int(duration))
-                task.setdefault('interval', int(interval))
-                task.setdefault('server', server)
-                task.setdefault('sha', sha)
+                task.setdefault('stopTimestamp', ts + int(duration[0]))
+                task.setdefault('duration', int(duration[0]))
+                task.setdefault('interval', int(interval[0]))
+                task.setdefault('server', server[0])
+                task.setdefault('sha', sha[0])
                 g_tasksQueue.addTask(task)
             else:
                 response.setdefault("result", "failure")
-
-            self.send_response(200)
             content = json.dumps(response, sort_keys=True, indent=4, separators=(',', ':'))
-        elif self.path.startswith("/performance/stop_collecting"):
-            print(self.path)
+        elif path.startswith("/performance/stop_collecting") and query:
             sha = query.get('sha')[0]
             task = g_tasksQueue.getTaskBySha(sha)
             if task:
@@ -51,50 +51,13 @@ class httpCallback(BaseHTTPRequestHandler):
             else:
                 response.setdefault("result", "failure")
 
-            self.send_response(200)
             content = json.dumps(response, sort_keys=True, indent=4, separators=(',', ':'))
         else:
-            self.send_response(404)
-            self.end_headers()
-            return
+            start_response('404 NOT FOUND', [('Content-Type', 'text/html')])
+            return content
 
-        self.send_header('Content-type', 'text/plain')
-        self.send_header('Content-length', "%d" % len(content))
-        self.end_headers()
-        self.wfile.write(content)
-        return
-
-
-class HttpServerThread(Thread):
-    def __init__(self, protocol = "http"):
-        ''' http server'''
-        Thread.__init__(self)
-        self.protocol = protocol
-        self.server = None
-        self.stopped = False
-        #https://docs.python.org/2/library/threading.html#thread-objects
-        #The entire Python program exits when no alive non-daemon threads are left.
-        self.setDaemon(True)
-
-    def run(self):
-        if self.protocol == "https":
-            print 'Started https server on port ' , HTTPS_PORT_NUMBER
-            server = HTTPServer(('', HTTPS_PORT_NUMBER), httpCallback)
-            #http://www.mynewsdesk.com/devcorner/blog_posts/a-simple-https-server-for-development-28395
-            #openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
-            server.socket = ssl.wrap_socket(server.socket, server_side=True, certfile='server.pem')
-        else:
-            print 'Started http server on port ' , PORT_NUMBER
-            server = HTTPServer(('', PORT_NUMBER), httpCallback)
-
-        self.server = server
-        while not self.stopped:
-            self.server.handle_request()
-
-    def stop(self):
-        self.stopped = True
-        self.server.server_close()
-        self.server.socket.close()
+    start_response('200 OK', [('Content-Type', 'text/html')])
+    return content
 
 class serverThread(threading.Thread):
     def __init__(self, name, loop, stop):
@@ -104,7 +67,7 @@ class serverThread(threading.Thread):
         self.stop = stop
 
     def run(self):
-        print "Starting " + self.name
+        #print "Starting " + self.name
         self.loop()
 
     def stop(self):
@@ -115,14 +78,8 @@ g_rLock = threading.RLock()
 g_tasksQueue = TaskQueue(10, g_rLock)
 
 if __name__ == '__main__':
+    print(platform.python_version())
     taskThread = serverThread("tasks-thread", g_tasksQueue.loop, g_tasksQueue.stop)
     taskThread.start()
-    http = HttpServerThread()
-    http.start()
-    try:
-        while True:
-            time.sleep(2)
-    except KeyboardInterrupt:
-        print '^C received, shutting down the web server'
-        http.stop()
-        taskThread.stop()
+    WSGIServer(webapp, bindAddress='/tmp/zhaogq.sock', umask=0000).run()
+    taskThread.stop()
