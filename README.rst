@@ -31,14 +31,6 @@ Response:
    
     {
         result:"succeeded/failed",
-        systemCpu:[],
-        systemMem:[],
-        processCpu:[],
-        processMem:[],
-        processReadSize:[],
-        processWriteSize:[],
-        processReadCount:[],
-        processWriteCount:[]
     }
 
 处理逻辑:
@@ -58,18 +50,38 @@ Response:
    
     {
         result:"succeeded/failed",
-        systemCpu:[],
-        systemMem:[],
-        processCpu:[],
-        processMem:[],
-        processReadSize:[],
-        processWriteSize:[],
-        processReadCount:[],
-        processWriteCount:[]
+        system:PerformanceInfo,
+        process:PerformanceInfo
+    }
+
+    PerformanceInfo = 
+    {
+        cpu:CpuInfo
+        memory:MemoryInfo
+        io:IoInfo
+    }
+
+    CpuInfo = 
+    {
+        cpu_percent:[],
+    }
+
+    MemoryInfo = 
+    {
+        percent:[],
+    }
+
+    IoInfo =
+    {
+        read_size:[],
+        write_size:[],
+        read_count:[],
+        write_count:[],
     }
 
 处理逻辑:
 
+    如果在发起服务器性能请求时，没有server名称，代理将只采集system的性能指标
     request中的散列与代理端存储的散列值一致，则返回代理中采集的性能指标，result为succeed，否则为failed
 
 
