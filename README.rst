@@ -65,8 +65,7 @@ Response:
     {
         percent:[],
         coreNum:
-        core1Percent:[]
-        core2Percent:[]
+        corePercent:[[],[],[]]
     }
 
     MemoryInfo = 
