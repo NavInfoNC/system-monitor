@@ -13,17 +13,17 @@ class ProcessInfo:
                 self.__procList.append(p)
 
     def __reset(self):
-        self.__cpuList = []
-        self.__memList = []
+        self.__cpuPercentList = []
+        self.__memPercentList = []
         self.__procList = []
 
-    def __caluCPU(self):
+    def __cpuPercent(self):
         usageRate = 0
         for p in self.__procList:
             usageRate += p.cpu_percent()
         return round(usageRate, 3)
 
-    def __caluMemory(self):
+    def __memPercent(self):
         usageRate = 0
         for p in self.__procList:
             usageRate += p.memory_percent()
@@ -32,12 +32,12 @@ class ProcessInfo:
     def start(self):
         if not self.__procList:
             return False
-        self.__cpuList.append(self.__caluCPU())
-        self.__memList.append(self.__caluMemory())
+        self.__cpuPercentList.append(self.__cpuPercent())
+        self.__memPercentList.append(self.__memPercent())
 
     def stop(self):
         resultDict = {}
-        resultDict.setdefault("cpu", self.__cpuList)
-        resultDict.setdefault("mem", self.__memList)
+        resultDict.setdefault("cpu", self.__cpuPercentList)
+        resultDict.setdefault("mem", self.__memPercentList)
         return resultDict
 

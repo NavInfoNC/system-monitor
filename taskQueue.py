@@ -29,15 +29,16 @@ class TaskQueue:
             if sha == taskSha:
                 break
             self.__queue.put(taskSha)
-        timer = task.get("timer")
-        task.setdefault("response", timer.stop())
+        sysInfoTimer = task.get("sysInfoTimer")
+        task.setdefault("response", sysInfoTimer.stop())
         self.__rLock.release()
         return task
 
     def addTask(self, task):
         self.__rLock.acquire()
-        timer = RepeatedTimer(task.get('interval'), task.get('server'))
-        task.setdefault('timer', timer)
+        serverName = task.get('server')
+        sysInfoTimer = RepeatedTimer(task.get('interval'), serverName)
+        task.setdefault('sysInfoTimer', sysInfoTimer)
         self.__queue.put(task)
         self.__rLock.release()
 
@@ -49,13 +50,13 @@ class TaskQueue:
         for index in range(queueSize):
             task = self.__queue.get(False)
             stopTimestamp = task.get("stopTimestamp")
+            response = task.get("response")
             if stopTimestamp + g_timeout < time.time():
                 print('remove invalid task:%s' %(task.get('sha')))
                 continue
-            elif stopTimestamp + g_timeout//5 < time.time() and not task.get("response"):
-                timer = task.get("timer")
-                task.setdefault("response", timer.stop())
-                print('response:%s' %(task.get('response')))
+            elif stopTimestamp + g_timeout//5 < time.time() and not response:
+                sysInfoTimer = task.get("sysInfoTimer")
+                task.setdefault("response", sysInfoTimer.stop())
                 self.__queue.put(task)
             else:
                 self.__queue.put(task)
@@ -84,6 +85,7 @@ if __name__ == '__main__':
     task.setdefault('duration', 5)
     task.setdefault('interval', 1)
     task.setdefault('sha', 123)
+    task.setdefault('server', None)
     tasksQueue.addTask(task)
     tasksQueue.loop()
 

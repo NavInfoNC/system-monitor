@@ -1,14 +1,14 @@
 #!/usr/bin/python
 from time import sleep
 from threading import Timer
-from processInfo import ProcessInfo
+from performanceInfo import PerformanceInfo
 
 class RepeatedTimer:
     def __init__(self, interval, *args, **kwargs):
         self.__timer     = None
         self.__interval   = interval
         self.__procName   = args[0]
-        self.__procInfo   = ProcessInfo(self.__procName)
+        self.__procInfo   = PerformanceInfo(self.__procName)
         self.__procStart  = self.__procInfo.start
         self.__procStop   = self.__procInfo.stop
         self.__kwargs     = kwargs
@@ -33,11 +33,15 @@ class RepeatedTimer:
 
 if __name__ == '__main__':
     print("starting...")
-    rt = RepeatedTimer(1, "server_manager")
-    rt1 = RepeatedTimer(2, "java")
+    rt1 = RepeatedTimer(1, "server_manager")
+    rt2 = RepeatedTimer(2, "java")
+    rt3 = RepeatedTimer(1, None)
     try:
         sleep(5)
     finally:
-        result1 = rt.stop()
-        result2 = rt1.stop()
-        print(result1, result2)
+        result1 = rt1.stop()
+        result2 = rt2.stop()
+        result3 = rt3.stop()
+        print(result1)
+        print(result2)
+        print(result3)

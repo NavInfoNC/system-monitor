@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+from performanceInfo import PerformanceInfo
 from flup.server.fcgi import WSGIServer
 from taskQueue import TaskQueue
 from threading import Thread
@@ -9,6 +9,7 @@ import platform
 import psutil
 import json
 import time
+from sysInfoCollector import g_sysInfoCollector
 
 def webapp(environ, start_response):
     method = environ.get('REQUEST_METHOD')
@@ -24,39 +25,45 @@ def webapp(environ, start_response):
             interval = query.get('interval')
             sha = query.get('sha')
             server = query.get('server')
-            print("%s,%s,%s,%s" % (server, duration, interval, sha))
-            if duration and interval and sha and server:
-                response.setdefault("result", "success")
+            if duration and interval and sha:
+                serverName = None
+                if server:
+                    serverName = server[0]
+                response.setdefault("result", "succeeded")
                 ts = time.time()
                 task.setdefault('startTimestamp', ts)
                 task.setdefault('stopTimestamp', ts + int(duration[0]))
                 task.setdefault('duration', int(duration[0]))
                 task.setdefault('interval', int(interval[0]))
-                task.setdefault('server', server[0])
+                task.setdefault('server', serverName)
+                task.setdefault('sysInfoCollector', g_sysInfoCollector)
                 task.setdefault('sha', sha[0])
                 g_tasksQueue.addTask(task)
             else:
-                response.setdefault("result", "failure")
-            content = json.dumps(response, sort_keys=True, indent=4, separators=(',', ':'))
+                response.setdefault("result", "failed")
         elif path.startswith("/performance/stop_collecting") and query:
             sha = query.get('sha')[0]
             task = g_tasksQueue.getTaskBySha(sha)
             if task:
                 taskResult = task.get('response')
-                result = "failure"
+                result = "failed"
                 if taskResult:
-                    result = "success"
+                    result = "succeeded"
                 response.setdefault("result", result)
-                response.setdefault("log", taskResult)
+                response.update(taskResult)
             else:
-                response.setdefault("result", "failure")
+                response.setdefault("result", "failed")
 
-            content = json.dumps(response, sort_keys=True, indent=4, separators=(',', ':'))
+        elif path.startswith("/performance/real_time"):
+            p = PerformanceInfo(None)
+            response.setdefault("result", "succeeded")
+            response.setdefault("system", p.instantData())
         else:
-            start_response('404 NOT FOUND', [('Content-Type', 'text/html')])
+            start_response('404 NOT FOUND', [('Content-Type', 'application/json')])
             return content
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
+    content = json.dumps(response, sort_keys=True, indent=4, separators=(',', ':'))
+    start_response('200 OK', [('Content-Type', 'application/json')])
     return content
 
 class serverThread(threading.Thread):
@@ -67,7 +74,6 @@ class serverThread(threading.Thread):
         self.stop = stop
 
     def run(self):
-        #print "Starting " + self.name
         self.loop()
 
     def stop(self):
@@ -79,7 +85,10 @@ g_tasksQueue = TaskQueue(10, g_rLock)
 
 if __name__ == '__main__':
     print(platform.python_version())
+    sysInfoThread = serverThread("sysInfo-thread", g_sysInfoCollector.loop, g_sysInfoCollector.stop)
+    sysInfoThread.start()
     taskThread = serverThread("tasks-thread", g_tasksQueue.loop, g_tasksQueue.stop)
     taskThread.start()
     WSGIServer(webapp, bindAddress='/tmp/zhaogq.sock', umask=0000).run()
     taskThread.stop()
+    sysInfoThread.stop()

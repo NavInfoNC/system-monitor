@@ -63,20 +63,25 @@ Response:
 
     CpuInfo = 
     {
-        cpu_percent:[],
+        percent:[],
+        coreNum:
+        core1Percent:[]
+        core2Percent:[]
     }
 
     MemoryInfo = 
     {
         percent:[],
+        used:[],
+        total:totalSize,
     }
 
     IoInfo =
     {
-        read_size:[],
-        write_size:[],
-        read_count:[],
-        write_count:[],
+        readSize:[],
+        writeSize:[],
+        readCount:[],
+        writeCount:[],
     }
 
 处理逻辑:
@@ -84,4 +89,19 @@ Response:
     如果在发起服务器性能请求时，没有server名称，代理将只采集system的性能指标
     request中的散列与代理端存储的散列值一致，则返回代理中采集的性能指标，result为succeed，否则为failed
 
+实时采集服务器性能数据
+----------------------
+
+Request::
+
+    GET /performance/real_time
+
+Response:
+
+.. code-block:: jss
+
+    {
+        result:"succeeded/failed",
+        system:PerformanceInfo,
+    }
 
