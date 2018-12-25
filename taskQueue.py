@@ -18,19 +18,21 @@ class TaskQueue:
         self.__rLock.release()
         return result
 
-    def getTaskBySha(self, sha):
+    def getTaskBySha(self, hash):
         task = {}
-        if not sha:
+        if not hash:
             return task
         self.__rLock.acquire()
         for index in range(self.__queue.qsize()):
             task = self.__queue.get()
-            taskSha = task.get('sha')
-            if sha == taskSha:
+            taskSha = task.get('hash')
+            if hash == taskSha:
                 break
             self.__queue.put(taskSha)
         sysInfoTimer = task.get("sysInfoTimer")
-        task.setdefault("response", sysInfoTimer.stop())
+        if sysInfoTimer:
+            print(sysInfoTimer)
+            task.setdefault("response", sysInfoTimer.stop())
         self.__rLock.release()
         return task
 
@@ -47,17 +49,22 @@ class TaskQueue:
             return
         self.__rLock.acquire()
         queueSize = self.__queue.qsize()
+        print("queue size:%d" %(queueSize))
         for index in range(queueSize):
+            task = []
             task = self.__queue.get(False)
+            if not task:
+                continue
+            print("task:%s" %(str(task)))
             stopTimestamp = task.get("stopTimestamp")
+            print("stop:%s" %(str(stopTimestamp)))
             response = task.get("response")
             if stopTimestamp + g_timeout < time.time():
-                print('remove invalid task:%s' %(task.get('sha')))
+                print('remove invalid task:%s' %(task.get('hash')))
                 continue
             elif stopTimestamp + g_timeout//5 < time.time() and not response:
                 sysInfoTimer = task.get("sysInfoTimer")
                 task.setdefault("response", sysInfoTimer.stop())
-                self.__queue.put(task)
             else:
                 self.__queue.put(task)
         self.__rLock.release()
@@ -84,7 +91,7 @@ if __name__ == '__main__':
     task.setdefault('stopTimestamp', currentTime + 5)
     task.setdefault('duration', 5)
     task.setdefault('interval', 1)
-    task.setdefault('sha', 123)
+    task.setdefault('hash', 123)
     task.setdefault('server', None)
     tasksQueue.addTask(task)
     tasksQueue.loop()

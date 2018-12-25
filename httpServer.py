@@ -23,9 +23,9 @@ def webapp(environ, start_response):
             task = {}
             duration = query.get('duration')
             interval = query.get('interval')
-            sha = query.get('sha')
+            hash = query.get('hash')
             server = query.get('server')
-            if duration and interval and sha:
+            if duration and interval and hash:
                 serverName = None
                 if server:
                     serverName = server[0]
@@ -37,23 +37,22 @@ def webapp(environ, start_response):
                 task.setdefault('interval', int(interval[0]))
                 task.setdefault('server', serverName)
                 task.setdefault('sysInfoCollector', g_sysInfoCollector)
-                task.setdefault('sha', sha[0])
+                task.setdefault('hash', hash[0])
                 g_tasksQueue.addTask(task)
             else:
                 response.setdefault("result", "failed")
         elif path.startswith("/performance/stop_collecting") and query:
-            sha = query.get('sha')[0]
-            task = g_tasksQueue.getTaskBySha(sha)
+            hash = query.get('hash')[0]
+            task = g_tasksQueue.getTaskBySha(hash)
             if task:
                 taskResult = task.get('response')
                 result = "failed"
                 if taskResult:
                     result = "succeeded"
+                    response.update(taskResult)
                 response.setdefault("result", result)
-                response.update(taskResult)
             else:
                 response.setdefault("result", "failed")
-
         elif path.startswith("/performance/real_time"):
             p = PerformanceInfo(None)
             response.setdefault("result", "succeeded")
@@ -89,6 +88,6 @@ if __name__ == '__main__':
     sysInfoThread.start()
     taskThread = serverThread("tasks-thread", g_tasksQueue.loop, g_tasksQueue.stop)
     taskThread.start()
-    WSGIServer(webapp, bindAddress='/tmp/zhaogq.sock', umask=0000).run()
+    WSGIServer(webapp, bindAddress='/etc/ncserver/system_monitor/system_monitor.sock', umask=0000).run()
     taskThread.stop()
     sysInfoThread.stop()

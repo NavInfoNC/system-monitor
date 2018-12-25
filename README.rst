@@ -1,4 +1,4 @@
-System info agent 
+1System info agent 
 =================
 
 本工程用于采集服务器性能数据。
@@ -17,10 +17,10 @@ API
 
 Request::
 
-    GET /performance/start_collecting?sha=<sha>&duration=<duration>&interval=<interval>&server=<server>
+    GET /performance/start_collecting?hash=<hash>&duration=<duration>&interval=<interval>&server=<server>
 
 注：
-    <sha>:在请求端通过SHA1("URL_PREFFIX;PID;CurrentTimestamp")计算出来
+    <hash>:在请求端通过MD5("URL_PREFFIX;PID;CurrentTimestamp")计算出来
     <duration>:采集持续时长
     <interval>:采集间隔
     <server>:采集指定服务的性能信息
@@ -42,7 +42,7 @@ Response:
 
 Request::
 
-    GET /performance/stop_collecting?sha=<sha>
+    GET /performance/stop_collecting?hash=<hash>
 
 Response:
 
