@@ -12,5 +12,9 @@ fi
 echo dst: $dst
 
 find $dir -iname "*.py" | xargs chmod +x > /dev/null 2>&1
-
 rsync -avP *.py $dst
+rsync -avP html/*.html $dst/html/
+
+if [[ $HOSTNAME == 'wl-load-test' ]];then
+	chgrp ncserver $dst/* > /dev/null 2>&1
+fi

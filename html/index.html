@@ -1,6 +1,7 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <style>
@@ -36,6 +37,10 @@
                 }
             },
         };
+
+        var g_hostname = window.location.hostname
+        var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time"
+        //http://192.168.146.61/system_monitor/api/v1/performance/real_time
 
         var lastReadSize = -1, lastReadCount = -1, lastWriteSize = -1, lastWriteCount = -1;
         function drawChart() {
@@ -103,15 +108,15 @@
                 setTimeout(startDraw, g_interval);
             };
 
+            var g_maxRetry = 10;
             var startDraw = function() {
                 $.ajax({
-                    url: "http://192.168.146.61/zhaogq/performance/real_time",
+                    url: g_apiHost,
                     dataType: "json",
                     success: webCallback,
                     error: function() {
-                        setTimeout(function() {
-                            location.reload();
-                        }, g_interval);
+                        alert("Request had failed, will retry after you press ok")
+                        location.reload();
                     }
                 });
             };
