@@ -31,7 +31,6 @@ class TaskQueue:
             self.__queue.put(taskSha)
         sysInfoTimer = task.get("sysInfoTimer")
         if sysInfoTimer:
-            print(sysInfoTimer)
             task.setdefault("response", sysInfoTimer.stop())
         self.__rLock.release()
         return task
@@ -49,15 +48,12 @@ class TaskQueue:
             return
         self.__rLock.acquire()
         queueSize = self.__queue.qsize()
-        print("queue size:%d" %(queueSize))
         for index in range(queueSize):
             task = []
             task = self.__queue.get(False)
             if not task:
                 continue
-            print("task:%s" %(str(task)))
             stopTimestamp = task.get("stopTimestamp")
-            print("stop:%s" %(str(stopTimestamp)))
             response = task.get("response")
             if stopTimestamp + g_timeout < time.time():
                 print('remove invalid task:%s' %(task.get('hash')))

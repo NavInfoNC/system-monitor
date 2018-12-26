@@ -1,3 +1,6 @@
 *.pyc
 cscope.*
 tags
+dist/
+build/
+*.spec
