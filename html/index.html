@@ -1,9 +1,10 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <meta name="viewport" content="width=device-width,height=device-height">
+    <title>Navicore system monitor</title>
     <style>
         .zone {
             float: left;
@@ -14,118 +15,8 @@
             height: 500;
         }
     </style>
-
-    <script type="text/javascript">
-        var g_interval = 3 * 1000;
-        var g_maxNumber = 300 * 1000 / g_interval;
-        var g_width = 700, g_height = 450;
-
-        google.charts.load('current', { 'packages': ['line'] });
-        google.charts.setOnLoadCallback(drawChart);
-
-        var g_config = {
-            width: g_width,
-            height: g_height
-        };
-        var g_percentConfig = {
-            width: g_width,
-            height: g_height,
-            vAxis: {
-                viewWindow: {
-                    min: 0,
-                    max: 100
-                }
-            },
-        };
-
-        var g_hostname = window.location.hostname
-        var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time"
-        //http://192.168.146.61/system_monitor/api/v1/performance/real_time
-
-        var lastReadSize = -1, lastReadCount = -1, lastWriteSize = -1, lastWriteCount = -1;
-        function drawChart() {
-            var cpuData = new google.visualization.DataTable();
-            var memData = new google.visualization.DataTable();
-            var ioBData = new google.visualization.DataTable();
-            var ioCData = new google.visualization.DataTable();
-            var cpuChart = new google.charts.Line(document.getElementById('cpu_content'));
-            var memChart = new google.charts.Line(document.getElementById('mem_content'));
-            var ioBChart = new google.charts.Line(document.getElementById('ioB_content'));
-            var ioCChart = new google.charts.Line(document.getElementById('ioC_content'));
-
-            cpuData.addColumn('string', 'CPU (percent)');
-            cpuData.addColumn('number', 'Total/N');
-
-            memData.addColumn('string', 'Memory (percent)')
-            memData.addColumn('number', 'used')
-
-            ioBData.addColumn('string', 'IO Size (Delta)')
-            ioBData.addColumn('number', 'R/MB')
-            ioBData.addColumn('number', 'W/MB')
-
-            ioCData.addColumn('string', 'IO Count (Delta)')
-            ioCData.addColumn('number', 'R')
-            ioCData.addColumn('number', 'W')
-
-            var webCallback = function(body, status, jq) {
-                var d = new Date(jq.getResponseHeader('Date'))
-                var t = ("0" + d.getMinutes()).slice(-2) + ':' + ("0" + d.getSeconds()).slice(-2)
-                //console.log(body, t)
-
-                if (lastReadSize == -1) {
-                    for (var i = 0; i < body.system.cpu.coreNum; i ++) {
-                        cpuData.addColumn('number', 'core' + (i + 1));
-                    }
-                }
-                var arr = body.system.cpu.corePercent[0]
-                arr.splice(0, 0, body.system.cpu.percent[0])
-                arr.splice(0, 0, t)
-                cpuData.addRow(arr);
-
-                memData.addRow([t, body.system.memory.percent[0]]);
-
-                var readSize  = body.system.io.readSize[0],  writeSize  = body.system.io.writeSize[0];
-                var readCount = body.system.io.readCount[0], writeCount = body.system.io.writeCount[0];
-                if (lastReadSize == -1) {
-                    lastReadSize = readSize, lastWriteSize = writeSize;
-                    lastReadCount = readCount, lastWriteCount = writeCount;
-                }
-                ioBData.addRow([t, readSize  - lastReadSize,  writeSize  - lastWriteSize]);
-                ioCData.addRow([t, readCount - lastReadCount, writeCount - lastWriteCount]);
-                lastReadSize = readSize, lastWriteSize = writeSize;
-                lastReadCount = readCount, lastWriteCount = writeCount;
-
-                while (cpuData.getNumberOfRows() > g_maxNumber) cpuData.removeRow(0);
-                while (memData.getNumberOfRows() > g_maxNumber) memData.removeRow(0);
-                while (ioBData.getNumberOfRows() > g_maxNumber) ioBData.removeRow(0);
-                while (ioCData.getNumberOfRows() > g_maxNumber) ioCData.removeRow(0);
-
-                cpuChart.draw(cpuData, g_percentOption);
-                memChart.draw(memData, g_percentOption);
-                ioBChart.draw(ioBData, g_option);
-                ioCChart.draw(ioCData, g_option);
-
-                setTimeout(startDraw, g_interval);
-            };
-
-            var g_maxRetry = 10;
-            var startDraw = function() {
-                $.ajax({
-                    url: g_apiHost,
-                    dataType: "json",
-                    success: webCallback,
-                    error: function() {
-                        alert("Request had failed, will retry after you press ok")
-                        location.reload();
-                    }
-                });
-            };
-
-            var g_option = google.charts.Line.convertOptions(g_config);
-            var g_percentOption = google.charts.Line.convertOptions(g_percentConfig);
-            startDraw();
-        }
-    </script>
+    <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.8/dist/g2.min.js"></script>
+    <script src="https://gw.alipayobjects.com/os/antv/assets/lib/jquery-3.2.1.min.js"></script>
 </head>
 
 <body>
@@ -134,9 +25,175 @@
         <div id="mem_content" class="zone"></div>
     </div>
     <div>
-        <div id="ioB_content" class="zone"></div>
-        <div id="ioC_content" class="zone"></div>
+        <div id="iob_content" class="zone"></div>
+        <div id="ioc_content" class="zone"></div>
     </div>
+    <script>document.body.clientHeight;</script>
+
+    <script>
+        var g_interval = 3000;
+        var g_maxNumber = 180 * 1000 / g_interval;
+        var g_hostname = window.location.hostname;
+        var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time";
+        //http://192.168.146.61/system_monitor/api/v1/performance/real_time
+
+        var g_cpuData = []
+        var g_memData = []
+        var g_ioBData = []
+        var g_ioCData = []
+
+        var g_cpuChart = new G2.Chart({
+            container: 'cpu_content',
+            forceFit: true,
+            min: 0,
+            padding: [10, 70, 70, 50]
+        });
+        var g_memChart = new G2.Chart({
+            container: 'mem_content',
+            forceFit: true,
+            min: 0,
+            padding: [10, 80, 70, 50]
+        });
+        var g_ioBChart = new G2.Chart({
+            container: 'iob_content',
+            forceFit: true,
+            min: 0,
+            padding: [10, 70, 70, 50]
+        });
+        var g_ioCChart = new G2.Chart({
+            container: 'ioc_content',
+            forceFit: true,
+            min: 0,
+            padding: [10, 70, 70, 50]
+        });
+
+        var g_config = {
+            date: {
+                type: 'cat',
+                mask: 'MM:ss',
+            },
+            value: {
+                min: 0,
+            }
+        };
+        var g_percentConfig = {
+            date: {
+                type: 'cat',
+                mask: 'MM:ss',
+            },
+            value: {
+                min: 0,
+                max: 100
+            }
+        };
+
+        g_cpuChart.source(g_cpuData, g_percentConfig);
+        g_cpuChart.legend({ attachLast: true });
+        g_cpuChart.line().position('date*value').color('type').size(3).shape('smooth')
+        g_cpuChart.render();
+
+        g_memChart.source(g_memData, g_percentConfig);
+        g_memChart.legend({ attachLast: true });
+        g_memChart.line().position('date*value').color('type').size(3).shape('smooth')
+        g_memChart.render();
+
+        g_ioBChart.source(g_ioBData, g_config);
+        g_ioBChart.legend({ attachLast: true });
+        g_ioBChart.line().position('date*value').color('type').size(3).shape('smooth')
+        g_ioBChart.render();
+        
+        g_ioCChart.source(g_ioCData, g_config);
+        g_ioCChart.legend({ attachLast: true });
+        g_ioCChart.line().position('date*value').color('type').size(3).shape('smooth')
+        g_ioCChart.render();
+
+        var lastReadSize = -1, lastReadCount = -1, lastWriteSize = -1, lastWriteCount = -1;
+        var webCallback = function (body, status, jq) {
+            var d = new Date(jq.getResponseHeader('Date'))
+            var t = ("0" + d.getMinutes()).slice(-2) + ':' + ("0" + d.getSeconds()).slice(-2)
+
+            var cpuNumber = body.system.cpu.coreNum
+            var cpu = {
+                'date': t,
+                'value': body.system.cpu.percent[0],
+                'type': 'CPU'
+            }
+            g_cpuData.push(cpu)
+            for (var i = 0; i < cpuNumber; i++) {
+                g_cpuData.push({
+                    'date': t,
+                    'value': body.system.cpu.corePercent[0][i],
+                    'type': "CPU" + i
+                })
+            }
+
+            g_memData.push({
+                'date': t,
+                'value': body.system.memory.percent[0],
+                'type': "memory"
+            });
+
+            var readSize  = body.system.io.readSize[0],  writeSize  = body.system.io.writeSize[0];
+            var readCount = body.system.io.readCount[0], writeCount = body.system.io.writeCount[0];
+            if (lastReadSize == -1) {
+                lastReadSize = readSize, lastWriteSize = writeSize;
+                lastReadCount = readCount, lastWriteCount = writeCount;
+            }
+
+            g_ioBData.push({
+                'date': t,
+                'value': readSize  - lastReadSize,
+                'type': "I/MB"
+            });
+            g_ioBData.push({
+                'date': t,
+                'value': writeSize  - lastWriteSize,
+                'type': "O/MB"
+            });
+            g_ioCData.push({
+                'date': t,
+                'value': readCount - lastReadCount,
+                'type': "I/N"
+            });
+            g_ioCData.push({
+                'date': t,
+                'value': writeCount - lastWriteCount,
+                'type': "O/N"
+            });
+            lastReadSize = readSize, lastWriteSize = writeSize;
+            lastReadCount = readCount, lastWriteCount = writeCount;
+
+            while (g_cpuData.length > g_maxNumber * (cpuNumber + 1)) {
+                for (var i = 0; i <= cpuNumber; i++) {
+                    g_cpuData.shift()
+                }
+            }
+            while (g_memData.length > g_maxNumber) { g_memData.shift() };
+            while (g_ioBData.length > g_maxNumber * 2) { g_ioBData.shift() };
+            while (g_ioCData.length > g_maxNumber * 2) { g_ioCData.shift() };
+
+            g_cpuChart.changeData(g_cpuData);
+            g_memChart.changeData(g_memData);
+            g_ioBChart.changeData(g_ioBData);
+            g_ioCChart.changeData(g_ioCData);
+
+            setTimeout(startDraw, g_interval);
+        };
+
+        var startDraw = function () {
+            $.ajax({
+                url: g_apiHost,
+                dataType: "json",
+                success: webCallback,
+                error: function () {
+                    alert("Request had failed, will retry after you press ok")
+                    location.reload();
+                }
+            });
+        };
+
+        startDraw();
+    </script>
 </body>
 
 </html>
