@@ -1,199 +1,196 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+        <meta charset="utf-8"><link rel="icon" href="https://static.jianshukeji.com/highcharts/images/favicon.ico">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+.zone {
+    float: left;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    width: 49%;
+    height: 500;
+}
+        </style>
+        <script src="https://img.hcharts.cn/highcharts/highcharts.js"></script>
+        <script src="https://img.hcharts.cn/highcharts/modules/exporting.js"></script>
+        <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
+        <script src="https://img.hcharts.cn/highcharts/themes/sand-signika.js"></script>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,height=device-height">
-    <title>Navicore system monitor</title>
-    <style>
-        .zone {
-            float: left;
-            margin: 0px;
-            padding: 0px;
-            border: 0px;
-            width: 49%;
-            height: 500;
-        }
-    </style>
-    <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.8/dist/g2.min.js"></script>
-    <script src="https://gw.alipayobjects.com/os/antv/assets/lib/jquery-3.2.1.min.js"></script>
-</head>
-
-<body>
-    <div>
-        <div id="cpu_content" class="zone"></div>
-        <div id="mem_content" class="zone"></div>
-    </div>
-    <div>
-        <div id="iob_content" class="zone"></div>
-        <div id="ioc_content" class="zone"></div>
-    </div>
-    <script>document.body.clientHeight;</script>
-
+    </head>
+    <body>
+        <div id="cpu" style="min-width:400px;height:400px" class="zone"></div>
+        <div id="mem" style="min-width:400px;height:400px" class="zone"></div>
+        <div id="ioByte" style="min-width:400px;height:400px" class="zone"></div>
+        <div id="ioCount" style="min-width:400px;height:400px" class="zone"></div>
+    </body>
     <script>
-        var g_interval = 3000;
-        var g_maxNumber = 180 * 1000 / g_interval;
-        var g_hostname = window.location.hostname;
-        var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time";
-        //http://192.168.146.61/system_monitor/api/v1/performance/real_time
+// JS 代码
+Highcharts.setOptions({
+    global: {
+        useUTC: false
+    }
+});
+function activeLastPointToolip(chart, j) {
+    var points = chart.series[j].points;
+    chart.tooltip.refresh(points[points.length -1]);
+}
 
-        var g_cpuData = []
-        var g_memData = []
-        var g_ioBData = []
-        var g_ioCData = []
+function generateSeries(id, content) {
+        return {
+            name: id,
+            data: (function () {
+                var data = [],
+                time = (new Date()).getTime(),
+                i;
+                for (i = -119; i <= 0; i += 1) {
+                    data.push({
+                        x: time + i * 1000,
+                        y: content
+                    });
+                }
+                return data;
+            }())
+        }
+}
 
-        var g_cpuChart = new G2.Chart({
-            container: 'cpu_content',
-            forceFit: true,
-            min: 0,
-            padding: [10, 70, 70, 50]
-        });
-        var g_memChart = new G2.Chart({
-            container: 'mem_content',
-            forceFit: true,
-            min: 0,
-            padding: [10, 80, 70, 50]
-        });
-        var g_ioBChart = new G2.Chart({
-            container: 'iob_content',
-            forceFit: true,
-            min: 0,
-            padding: [10, 70, 70, 50]
-        });
-        var g_ioCChart = new G2.Chart({
-            container: 'ioc_content',
-            forceFit: true,
-            min: 0,
-            padding: [10, 70, 70, 50]
-        });
-
-        var g_config = {
-            date: {
-                type: 'cat',
-                mask: 'MM:ss',
-            },
-            value: {
-                min: 0,
-            }
-        };
-        var g_percentConfig = {
-            date: {
-                type: 'cat',
-                mask: 'MM:ss',
-            },
-            value: {
-                min: 0,
-                max: 100
-            }
-        };
-
-        g_cpuChart.source(g_cpuData, g_percentConfig);
-        g_cpuChart.legend({ attachLast: true });
-        g_cpuChart.line().position('date*value').color('type').size(3).shape('smooth')
-        g_cpuChart.render();
-
-        g_memChart.source(g_memData, g_percentConfig);
-        g_memChart.legend({ attachLast: true });
-        g_memChart.line().position('date*value').color('type').size(3).shape('smooth')
-        g_memChart.render();
-
-        g_ioBChart.source(g_ioBData, g_config);
-        g_ioBChart.legend({ attachLast: true });
-        g_ioBChart.line().position('date*value').color('type').size(3).shape('smooth')
-        g_ioBChart.render();
-        
-        g_ioCChart.source(g_ioCData, g_config);
-        g_ioCChart.legend({ attachLast: true });
-        g_ioCChart.line().position('date*value').color('type').size(3).shape('smooth')
-        g_ioCChart.render();
-
-        var lastReadSize = -1, lastReadCount = -1, lastWriteSize = -1, lastWriteCount = -1;
-        var webCallback = function (body, status, jq) {
-            var d = new Date(jq.getResponseHeader('Date'))
-            var t = ("0" + d.getMinutes()).slice(-2) + ':' + ("0" + d.getSeconds()).slice(-2)
-
-            var cpuNumber = body.system.cpu.coreNum
-            var cpu = {
-                'date': t,
-                'value': body.system.cpu.percent[0],
-                'type': 'CPU'
-            }
-            g_cpuData.push(cpu)
-            for (var i = 0; i < cpuNumber; i++) {
-                g_cpuData.push({
-                    'date': t,
-                    'value': body.system.cpu.corePercent[0][i],
-                    'type': "CPU" + i
-                })
-            }
-
-            g_memData.push({
-                'date': t,
-                'value': body.system.memory.percent[0],
-                'type': "memory"
-            });
-
-            var readSize  = body.system.io.readSize[0],  writeSize  = body.system.io.writeSize[0];
-            var readCount = body.system.io.readCount[0], writeCount = body.system.io.writeCount[0];
-            if (lastReadSize == -1) {
-                lastReadSize = readSize, lastWriteSize = writeSize;
-                lastReadCount = readCount, lastWriteCount = writeCount;
-            }
-
-            g_ioBData.push({
-                'date': t,
-                'value': readSize  - lastReadSize,
-                'type': "I/MB"
-            });
-            g_ioBData.push({
-                'date': t,
-                'value': writeSize  - lastWriteSize,
-                'type': "O/MB"
-            });
-            g_ioCData.push({
-                'date': t,
-                'value': readCount - lastReadCount,
-                'type': "I/N"
-            });
-            g_ioCData.push({
-                'date': t,
-                'value': writeCount - lastWriteCount,
-                'type': "O/N"
-            });
-            lastReadSize = readSize, lastWriteSize = writeSize;
-            lastReadCount = readCount, lastWriteCount = writeCount;
-
-            while (g_cpuData.length > g_maxNumber * (cpuNumber + 1)) {
-                for (var i = 0; i <= cpuNumber; i++) {
-                    g_cpuData.shift()
+function generateStyle(type) {
+    var seriesData = []
+    var srcData
+    var unit = ""
+    if (type == 'cpu') {
+        seriesData.push(generateSeries('cpu', 0))
+        for (var i = 1; i <= g_cpuNumber; i++) {
+            seriesData.push(generateSeries('cpu' + (i - 1), 0))
+        }
+        unit = '%'
+        srcData = g_cpuData
+    }else if (type == 'mem') {
+        var content0 = generateSeries('mem', 0)
+        unit = '%'
+        seriesData = [content0]
+        console.log(seriesData)
+        srcData = g_memData
+    }else if (type == 'ioByte') {
+        unit = 'MB'
+        var content0 = generateSeries('ioReadSize', 0)
+        var content1 = generateSeries('ioWriteSize', 0)
+        seriesData = [content0, content1]
+        srcData = g_ioByte
+    }else if (type == 'ioCount') {
+        var content0 = generateSeries('ioReadCount', 0)
+        var content1 = generateSeries('ioWriteCount', 0)
+        seriesData = [content0, content1]
+        srcData = g_ioCount
+    }
+    return {
+        chart: {
+            type: 'spline',
+            marginRight: 10,
+            events: {
+                load: function () {
+                    for(var j = 0; j < this.series.length; j++)
+                    {
+                        var serie = this.series[j]
+                        chart = this;
+                        activeLastPointToolip(chart, j);
+                        setInterval(function (serie, index, data) {
+                            var x = (new Date()).getTime()
+                            var y = data[index]
+                            serie.addPoint([x, y], true, true);
+                            activeLastPointToolip(chart, index);
+                        }, 1000, serie, j, srcData);
+                    }
                 }
             }
-            while (g_memData.length > g_maxNumber) { g_memData.shift() };
-            while (g_ioBData.length > g_maxNumber * 2) { g_ioBData.shift() };
-            while (g_ioCData.length > g_maxNumber * 2) { g_ioCData.shift() };
+        },
+        title: {
+            text: type
+        },
+        xAxis: {
+            type: 'datetime',
+            tickPixelInterval: 150
+        },
+        yAxis: {
+            labels: {
+                format: '{value}' + unit
+            },
+            title: {
+                text: null
+            }
+        },
+        tooltip: {
+            formatter: function () {
+                return '<b>' + this.series.name + '</b><br/>' +
+                    Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                    Highcharts.numberFormat(this.y, 2) + unit;
+            },
+        },
+        legend: {
+            enabled: true
+        },
+        series: seriesData
+    }
+}
 
-            g_cpuChart.changeData(g_cpuData);
-            g_memChart.changeData(g_memData);
-            g_ioBChart.changeData(g_ioBData);
-            g_ioCChart.changeData(g_ioCData);
+var g_interval = 1000;
+var g_hostname = window.location.hostname;
+var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time";
+var g_cpuData = [0]
+var g_memData = [0]
+var g_ioByte = [0]
+var g_ioCount = [0]
+var g_ioLastByte = [0]
+var g_ioLastCount = [0]
+var g_cpuNumber = 0
 
-            setTimeout(startDraw, g_interval);
-        };
+var g_start = false
+var webCallback = function (body, status, jq) {
+    g_cpuNumber = body.system.cpu.coreNum
+    g_cpuData[0] = body.system.cpu.percent[0]
+    for (var i = 1; i <= g_cpuNumber; i++) {
+        g_cpuData[i] = body.system.cpu.corePercent[0][i - 1]
+    }
 
-        var startDraw = function () {
-            $.ajax({
-                url: g_apiHost,
-                dataType: "json",
-                success: webCallback,
-                error: function () {
-                    alert("Request had failed, will retry after you press ok")
-                    location.reload();
-                }
-            });
-        };
+    g_memData[0] = body.system.memory.percent[0]
 
-        startDraw();
+    g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
+    g_ioByte[1] = body.system.io.writeSize[1] - g_ioLastByte[1]
+    g_ioLastByte[0] = body.system.io.readSize[0] 
+    g_ioLastByte[1] = body.system.io.writeSize[1]
+
+    g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
+    g_ioCount[1] = body.system.io.writeCount[1] - g_ioLastCount[1]
+    g_ioLastCount[0] = body.system.io.readCount[0] 
+    g_ioLastCount[1] = body.system.io.writeCount[1]
+
+    setTimeout(startDraw, g_interval);
+    if (!g_start) {
+        g_start = true
+        Highcharts.chart('mem', generateStyle('mem'));
+        Highcharts.chart('ioByte', generateStyle('ioByte'));
+        Highcharts.chart('ioCount', generateStyle('ioCount'));
+        Highcharts.chart('cpu', generateStyle('cpu'));
+    }
+}
+var startDraw = function () {
+    $.ajax({
+        url: g_apiHost,
+        dataType: "json",
+        success: webCallback,
+        error: function () {
+            alert("Request had failed, will retry after you press ok")
+                location.reload();
+        }
+    });
+};
+
+startDraw();
+
+
+
     </script>
-</body>
 
 </html>
