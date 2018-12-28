@@ -1,24 +1,22 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
-        <meta charset="utf-8"><link rel="icon" href="https://static.jianshukeji.com/highcharts/images/favicon.ico">
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-.zone {
-    float: left;
-    margin: 0px;
-    padding: 0px;
-    border: 0px;
-    width: 49%;
-    height: 500;
-}
+        .zone {
+            float: left;
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            width: 49%;
+            height: 500;
+        }
         </style>
+        <script src="./jquery-3.3.1.js"></script>
         <script src="https://img.hcharts.cn/highcharts/highcharts.js"></script>
-        <script src="https://img.hcharts.cn/highcharts/modules/exporting.js"></script>
         <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
         <script src="https://img.hcharts.cn/highcharts/themes/sand-signika.js"></script>
-
     </head>
     <body>
         <div id="cpu" style="min-width:400px;height:400px" class="zone"></div>
@@ -27,170 +25,174 @@
         <div id="ioCount" style="min-width:400px;height:400px" class="zone"></div>
     </body>
     <script>
-// JS 代码
-Highcharts.setOptions({
-    global: {
-        useUTC: false
-    }
-});
-function activeLastPointToolip(chart, j) {
-    var points = chart.series[j].points;
-    chart.tooltip.refresh(points[points.length -1]);
-}
-
-function generateSeries(id, content) {
-        return {
-            name: id,
-            data: (function () {
-                var data = [],
-                time = (new Date()).getTime(),
-                i;
-                for (i = -119; i <= 0; i += 1) {
-                    data.push({
-                        x: time + i * 1000,
-                        y: content
-                    });
-                }
-                return data;
-            }())
-        }
-}
-
-function generateStyle(type) {
-    var seriesData = []
-    var srcData
-    var unit = ""
-    if (type == 'cpu') {
-        seriesData.push(generateSeries('cpu', 0))
-        for (var i = 1; i <= g_cpuNumber; i++) {
-            seriesData.push(generateSeries('cpu' + (i - 1), 0))
-        }
-        unit = '%'
-        srcData = g_cpuData
-    }else if (type == 'mem') {
-        var content0 = generateSeries('mem', 0)
-        unit = '%'
-        seriesData = [content0]
-        console.log(seriesData)
-        srcData = g_memData
-    }else if (type == 'ioByte') {
-        unit = 'MB'
-        var content0 = generateSeries('ioReadSize', 0)
-        var content1 = generateSeries('ioWriteSize', 0)
-        seriesData = [content0, content1]
-        srcData = g_ioByte
-    }else if (type == 'ioCount') {
-        var content0 = generateSeries('ioReadCount', 0)
-        var content1 = generateSeries('ioWriteCount', 0)
-        seriesData = [content0, content1]
-        srcData = g_ioCount
-    }
-    return {
-        chart: {
-            type: 'spline',
-            marginRight: 10,
-            events: {
-                load: function () {
-                    for(var j = 0; j < this.series.length; j++)
-                    {
-                        var serie = this.series[j]
-                        chart = this;
-                        activeLastPointToolip(chart, j);
-                        setInterval(function (serie, index, data) {
-                            var x = (new Date()).getTime()
-                            var y = data[index]
-                            serie.addPoint([x, y], true, true);
-                            activeLastPointToolip(chart, index);
-                        }, 1000, serie, j, srcData);
-                    }
-                }
-            }
-        },
-        title: {
-            text: type
-        },
-        xAxis: {
-            type: 'datetime',
-            tickPixelInterval: 150
-        },
-        yAxis: {
-            labels: {
-                format: '{value}' + unit
-            },
-            title: {
-                text: null
-            }
-        },
-        tooltip: {
-            formatter: function () {
-                return '<b>' + this.series.name + '</b><br/>' +
-                    Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
-                    Highcharts.numberFormat(this.y, 2) + unit;
-            },
-        },
-        legend: {
-            enabled: true
-        },
-        series: seriesData
-    }
-}
-
-var g_interval = 1000;
-var g_hostname = window.location.hostname;
-var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time";
-var g_cpuData = [0]
-var g_memData = [0]
-var g_ioByte = [0]
-var g_ioCount = [0]
-var g_ioLastByte = [0]
-var g_ioLastCount = [0]
-var g_cpuNumber = 0
-
-var g_start = false
-var webCallback = function (body, status, jq) {
-    g_cpuNumber = body.system.cpu.coreNum
-    g_cpuData[0] = body.system.cpu.percent[0]
-    for (var i = 1; i <= g_cpuNumber; i++) {
-        g_cpuData[i] = body.system.cpu.corePercent[0][i - 1]
-    }
-
-    g_memData[0] = body.system.memory.percent[0]
-
-    g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
-    g_ioByte[1] = body.system.io.writeSize[1] - g_ioLastByte[1]
-    g_ioLastByte[0] = body.system.io.readSize[0] 
-    g_ioLastByte[1] = body.system.io.writeSize[1]
-
-    g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
-    g_ioCount[1] = body.system.io.writeCount[1] - g_ioLastCount[1]
-    g_ioLastCount[0] = body.system.io.readCount[0] 
-    g_ioLastCount[1] = body.system.io.writeCount[1]
-
-    setTimeout(startDraw, g_interval);
-    if (!g_start) {
-        g_start = true
-        Highcharts.chart('mem', generateStyle('mem'));
-        Highcharts.chart('ioByte', generateStyle('ioByte'));
-        Highcharts.chart('ioCount', generateStyle('ioCount'));
-        Highcharts.chart('cpu', generateStyle('cpu'));
-    }
-}
-var startDraw = function () {
-    $.ajax({
-        url: g_apiHost,
-        dataType: "json",
-        success: webCallback,
-        error: function () {
-            alert("Request had failed, will retry after you press ok")
-                location.reload();
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
         }
     });
-};
-
-startDraw();
-
-
-
+    function activeLastPointToolip(chart, j) {
+        var points = chart.series[j].points;
+        chart.tooltip.refresh(points[points.length -1]);
+    }
+    
+    function generateSeries(id, content) {
+            return {
+                name: id,
+                data: (function () {
+                    var data = []
+                    time = (new Date()).getTime()
+                    for (var i = 1-g_totalTime; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * g_interval,
+                            y: content
+                        });
+                    }
+                    return data;
+                }())
+            }
+    }
+    
+    function generateStyle(type) {
+        var seriesData = []
+        var srcData
+        var unit = ""
+        var title = ""
+        if (type == 'cpu') {
+            seriesData.push(generateSeries('cpu', 0))
+            for (var i = 1; i <= g_cpuNumber; i++) {
+                seriesData.push(generateSeries('cpu' + (i - 1), 0))
+            }
+            unit = '%'
+            srcData = g_cpuData
+            title = "CPU Utilization"
+        }else if (type == 'mem') {
+            seriesData.push(generateSeries('mem', 0))
+            unit = '%'
+            srcData = g_memData
+            title = "Memory Utilization"
+        }else if (type == 'ioByte') {
+            unit = 'MB'
+            seriesData.push(generateSeries('read size', 0))
+            seriesData.push(generateSeries('write size', 0))
+            srcData = g_ioByte
+            title = "IO R/W Size(MB)"
+        }else if (type == 'ioCount') {
+            seriesData.push(generateSeries('read count', 0))
+            seriesData.push(generateSeries('write count', 0))
+            srcData = g_ioCount
+            title = "IO R/W Count"
+        }
+        return {
+            chart: {
+                type: 'spline',
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        for(var j = 0; j < this.series.length; j++)
+                        {
+                            var chart = this;
+                            activeLastPointToolip(chart, j);
+                            setInterval(function (chart, index, data) {
+                                var x = (new Date()).getTime()
+                                var y = data[index]
+                                chart.series[index].addPoint([x, y], true, true);
+                                activeLastPointToolip(chart, index);
+                            }, g_interval, chart, j, srcData);
+                        }
+                    }
+                }
+            },
+            title: {
+                text: title 
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 150
+            },
+            yAxis: {
+                labels: {
+                    format: '{value}' + unit
+                },
+                title: {
+                    text: null
+                }
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                        Highcharts.numberFormat(this.y, 2) + unit;
+                },
+            },
+            legend: {
+                enabled: true
+            },
+            series: seriesData
+        }
+    }
+    
+    var g_interval = 1000
+    var g_totalTime = 5 * 60
+    var g_hostname = window.location.hostname;
+    var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time"
+    
+    var g_cpuData = [0]
+    var g_memData = [0]
+    var g_ioByte = [0]
+    var g_ioCount = [0]
+    var g_ioLastByte = [0]
+    var g_ioLastCount = [0]
+    var g_cpuNumber = 0;
+    
+    (function (H) {
+        H.wrap(H.Tooltip.prototype, 'refresh', function (proceed, point, e) {
+            if (e && e.type == 'mousemove') {
+                proceed.call(this, point, e);
+            }
+        });
+    }(Highcharts))
+    
+    var g_start = false
+    var webCallback = function (body, status, jq) {
+        g_cpuNumber = body.system.cpu.coreNum
+        g_cpuData[0] = body.system.cpu.percent[0]
+        for (var i = 1; i <= g_cpuNumber; i++) {
+            g_cpuData[i] = body.system.cpu.corePercent[0][i - 1]
+        }
+    
+        g_memData[0] = body.system.memory.percent[0]
+    
+        g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
+        g_ioByte[1] = body.system.io.writeSize[0] - g_ioLastByte[1]
+        g_ioLastByte[0] = body.system.io.readSize[0] 
+        g_ioLastByte[1] = body.system.io.writeSize[0]
+    
+        g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
+        g_ioCount[1] = body.system.io.writeCount[0] - g_ioLastCount[1]
+        g_ioLastCount[0] = body.system.io.readCount[0] 
+        g_ioLastCount[1] = body.system.io.writeCount[0]
+    
+        setTimeout(startDraw, g_interval);
+        if (!g_start) {
+            g_start = true
+            $('#cpu').highcharts(generateStyle('cpu'));
+            $('#mem').highcharts(generateStyle('mem'));
+            $('#ioByte').highcharts(generateStyle('ioByte'));
+            $('#ioCount').highcharts(generateStyle('ioCount'));
+        }
+    }
+    var startDraw = function () {
+        $.ajax({
+            url: g_apiHost,
+            dataType: "json",
+            success: webCallback,
+            error: function () {
+                alert("Request had failed, will retry after you press ok")
+                    location.reload();
+            }
+        });
+    };
+    
+    startDraw();
     </script>
-
 </html>
