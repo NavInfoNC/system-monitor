@@ -13,7 +13,7 @@
             height: 500;
         }
         </style>
-        <script src="jquery-3.3.1.js"></script>
+        <script src="./jquery-3.3.1.js"></script>
         <script src="https://img.hcharts.cn/highcharts/highcharts.js"></script>
         <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
         <script src="https://img.hcharts.cn/highcharts/themes/sand-signika.js"></script>
@@ -57,6 +57,7 @@
         var srcData
         var unit = ""
         var title = ""
+        var yMax = null
         if (type == 'cpu') {
             seriesData.push(generateSeries('cpu', 0))
             for (var i = 1; i <= g_cpuNumber; i++) {
@@ -65,11 +66,13 @@
             unit = '%'
             srcData = g_cpuData
             title = "CPU Utilization"
+            yMax = 100
         }else if (type == 'mem') {
             seriesData.push(generateSeries('mem', 0))
             unit = '%'
             srcData = g_memData
             title = "Memory Utilization"
+            yMax = 100
         }else if (type == 'ioByte') {
             unit = 'MB'
             seriesData.push(generateSeries('read size', 0))
@@ -110,6 +113,7 @@
                 tickPixelInterval: 150
             },
             yAxis: {
+                max: yMax,
                 labels: {
                     format: '{value}' + unit
                 },
