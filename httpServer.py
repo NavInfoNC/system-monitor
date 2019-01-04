@@ -88,6 +88,6 @@ if __name__ == '__main__':
     sysInfoThread.start()
     taskThread = serverThread("tasks-thread", g_tasksQueue.loop, g_tasksQueue.stop)
     taskThread.start()
-    WSGIServer(webapp, bindAddress='/etc/ncserver/system-monitor/system_monitor.sock', umask=0000).run()
+    WSGIServer(webapp, bindAddress='/etc/ncserver/system-monitor/.ncserver.sock', umask=0000).run()
     taskThread.stop()
     sysInfoThread.stop()
