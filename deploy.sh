@@ -17,4 +17,5 @@ find . -iname "*.sh" | xargs -i dos2unix -n {} {} > /dev/null 2>&1
 
 
 rsync -avP *.py $dst
+rsync -avP restart.sh $dst
 rsync -avP html/* $dst/html/

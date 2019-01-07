@@ -1,7 +1,7 @@
 #!/bin/bash
 cd `dirname $(readlink -f $0)`
 
-pids=`ps aux | grep -v grep | grep "httpServer.py"`
+pids=`ps aux | grep -v grep | grep "httpServer.py" | awk '{print $2}'`
 if [[ $? == 0 ]];then
 	for p in $pids;do
 		kill -9 $p
