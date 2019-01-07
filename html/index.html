@@ -93,12 +93,14 @@
                         for(var j = 0; j < this.series.length; j++)
                         {
                             var chart = this;
-                            activeLastPointToolip(chart, j);
                             setInterval(function (chart, index, data) {
                                 var x = (new Date()).getTime()
                                 var y = data[index]
-                                chart.series[index].addPoint([x, y], true, true);
-                                activeLastPointToolip(chart, index);
+                                chart.series[index].addPoint([x, y], false, true);
+                                if (!document.hidden) {
+                                    chart.redraw(true)
+                                    activeLastPointToolip(chart, index)
+                                }
                             }, g_interval, chart, j, srcData);
                         }
                     }
