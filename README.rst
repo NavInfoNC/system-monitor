@@ -1,7 +1,14 @@
-1System info agent 
+System info agent 
 =================
 
 本工程用于采集服务器性能数据。
+
+Depends
+===
+
+linux: lscpu
+
+python-lib: psutil, flup1.0
 
 API
 ===
@@ -30,7 +37,7 @@ Response:
 .. code-block:: jss
    
     {
-        result:"succeeded/failed",
+        "result":"succeeded/failed",
     }
 
 处理逻辑:
@@ -49,38 +56,62 @@ Response:
 .. code-block:: jss
    
     {
-        result:"succeeded/failed",
-        system:PerformanceInfo,
-        process:PerformanceInfo
+        "result":"succeeded/failed",
+        "system":PerformanceInfo,
+        "process":PerformanceInfo
     }
 
     PerformanceInfo = 
     {
-        cpu:CpuInfo
-        memory:MemoryInfo
-        io:IoInfo
+        "cpu":CpuInfo
+        "memory":MemoryInfo
+        "io":IoInfo
+        "disk":DiskInfo
+        "platform":PlatformInfo
     }
 
     CpuInfo = 
     {
-        percent:[],
-        coreNum:
-        corePercent:[[],[],[]]
+        "percent":[],
+        "coreNum":
+        "corePercent":[[],[],[]]
+        "architecture":
+        "model":
+        "MHz":
     }
 
     MemoryInfo = 
     {
-        percent:[],
-        used:[],
-        total:totalSize,
+        "percent":[],
+        "used":[],
+        "total":totalSize,
     }
 
     IoInfo =
     {
-        readSize:[],
-        writeSize:[],
-        readCount:[],
-        writeCount:[],
+        "readSize":[],
+        "writeSize":[],
+        "readCount":[],
+        "writeCount":[],
+    }
+
+    PlatformInfo =
+    {
+        "version":version,
+        "hostname":hostname,
+        "system":system,
+        "release":release
+    }
+
+    DisksInfo =
+    {
+        <mountPoint>:DiskInfo
+    }
+
+    DiskInfo = 
+    {
+        "total":total,
+        "used":used
     }
 
 处理逻辑:
@@ -100,7 +131,7 @@ Response:
 .. code-block:: jss
 
     {
-        result:"succeeded/failed",
-        system:PerformanceInfo,
+        "result":"succeeded/failed",
+        "system":PerformanceInfo,
     }
 

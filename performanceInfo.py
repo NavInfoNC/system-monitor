@@ -2,6 +2,7 @@
 import time
 import psutil
 import threading
+import platform
 from sysInfoCollector import g_sysInfoCollector
 
 def toMB(size):
@@ -124,31 +125,50 @@ class PerformanceInfo:
 
     def stop(self):
         ioDict = {}
-        ioDict.setdefault("readSize", self.__ioReadBytesList)
-        ioDict.setdefault("writeSize", self.__ioWriteBytesList)
-        ioDict.setdefault("readCount", self.__ioReadCountList)
-        ioDict.setdefault("writeCount", self.__ioWriteCountList)
+        ioDict["readSize"] = self.__ioReadBytesList
+        ioDict["writeSize"] = self.__ioWriteBytesList
+        ioDict["readCount"] = self.__ioReadCountList
+        ioDict["writeCount"] = self.__ioWriteCountList
 
         memDict = {}
-        memDict.setdefault("percent", self.__memPercentList)
-        memDict.setdefault("used", self.__usedMemList)
-        memDict.setdefault("free", self.__freeMemList)
-        memDict.setdefault("total", round(toGB(psutil.virtual_memory().total), 3))
+        memDict["percent"] = self.__memPercentList
+        memDict["used"] = self.__usedMemList
+        memDict["free"] = self.__freeMemList
+        memDict["total"] = round(toGB(psutil.virtual_memory().total), 3)
 
         cpuDict = {}
-        cpuDict.setdefault("percent", self.__cpuPercentList)
-        cpuDict.setdefault("coreNum", self.__core_num)
-        #for i in range(self.__core_num):
-        #    corePercentList = []
-        #    for j in range(len(self.__allCpuPercentList)):
-        #        corePercentList.append(self.__allCpuPercentList[j][i])
-        #    cpuDict.setdefault("core" + str(i) + "Percent", corePercentList)
-        cpuDict.setdefault("corePercent", self.__allCpuPercentList)
+        cpuDict["corePercent"] = self.__allCpuPercentList
+        cpuDict["percent"] = self.__cpuPercentList
+        cpuDict["coreNum"] = self.__core_num
+
+        cpuInfo = g_sysInfoCollector.getCpuInfo()
+        cpuDict["model"] = cpuInfo["Model name"]
+        cpuDict["MHz"] = cpuInfo["CPU MHz"]
+        cpuDict["architecture"] = cpuInfo["Architecture"]
+
+        diskDict = {}
+        for part in psutil.disk_partitions():
+            mountPoint = part.mountpoint
+            diskUsage = psutil.disk_usage(mountPoint)
+            diskUsageDict = {}
+            diskUsageDict["total"] = round(toGB(diskUsage.total), 3)
+            diskUsageDict["percent"] = diskUsage.percent
+            diskDict[mountPoint] = diskUsageDict
+
+        platformDict = {}
+        platformDict["version"] = platform.version()
+        platformDict["hostname"] = platform.node()
+        platformDict["system"] = platform.system()
+        platformDict["release"] = platform.release()
+        platformDict["distribution"] = ''.join(platform.linux_distribution())
 
         resultDict = {}
-        resultDict.setdefault("cpu", cpuDict)
-        resultDict.setdefault("memory", memDict)
-        resultDict.setdefault("io", ioDict)
+        resultDict["cpu"] = cpuDict
+        resultDict["memory"] = memDict
+        resultDict["io"] = ioDict
+        resultDict["disk"] = diskDict
+        resultDict["platform"] = platformDict
+
         return resultDict
 
 class serverThread(threading.Thread):
