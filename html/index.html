@@ -223,7 +223,7 @@
             `
             $('#disk').append($(diskString))
             for (key in body.system.disk) {
-                var diskPartition = `<p>Usage of <strong>${key} :</strong> ${body.system.disk[key].percent}% of ${body.system.disk[key].total} GB</p>`
+                var diskPartition = `<p>Usage of <strong>${body.system.disk[key].mountPoint} :</strong> ${body.system.disk[key].percent}% of ${body.system.disk[key].total} GB</p>`
                 $('#disk-body').append($(diskPartition))
             }
 

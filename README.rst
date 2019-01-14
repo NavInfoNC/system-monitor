@@ -66,7 +66,7 @@ Response:
         "cpu":CpuInfo
         "memory":MemoryInfo
         "io":IoInfo
-        "disk":DiskInfo
+        "disk":DiskInfo[]
         "platform":PlatformInfo
     }
 
@@ -101,15 +101,13 @@ Response:
         "hostname":hostname,
         "system":system,
         "release":release
+        "distribution":distribution
     }
 
-    DisksInfo =
+    DiskInfo =
     {
-        <mountPoint>:DiskInfo
-    }
-
-    DiskInfo = 
-    {
+        "mountPoint":mountPoint
+        "device":device
         "total":total,
         "used":used
     }

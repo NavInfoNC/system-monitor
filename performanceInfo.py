@@ -113,7 +113,10 @@ class PerformanceInfo:
         return self.stop()
 
     def start(self):
+        self.__allCpuPercentList.append(self.__allCpuPercent())
+        print(self.__allCpuPercent())
         self.__cpuPercentList.append(self.__cpuPercentSum())
+        print(self.__cpuPercentSum())
         self.__memPercentList.append(self.__memPercent())
         self.__usedMemList.append(self.__usedMem())
         self.__freeMemList.append(self.__freeMem())
@@ -121,7 +124,6 @@ class PerformanceInfo:
         self.__ioWriteBytesList.append(self.__ioWriteBytes())
         self.__ioReadCountList.append(self.__ioReadCount())
         self.__ioWriteCountList.append(self.__ioWriteCount())
-        self.__allCpuPercentList.append(self.__allCpuPercent())
 
     def stop(self):
         ioDict = {}
@@ -137,23 +139,25 @@ class PerformanceInfo:
         memDict["total"] = round(toGB(psutil.virtual_memory().total), 3)
 
         cpuDict = {}
-        cpuDict["corePercent"] = self.__allCpuPercentList
-        cpuDict["percent"] = self.__cpuPercentList
         cpuDict["coreNum"] = self.__core_num
+        cpuDict["percent"] = self.__cpuPercentList
+        cpuDict["corePercent"] = self.__allCpuPercentList
 
         cpuInfo = g_sysInfoCollector.getCpuInfo()
         cpuDict["model"] = cpuInfo["Model name"]
         cpuDict["MHz"] = cpuInfo["CPU MHz"]
         cpuDict["architecture"] = cpuInfo["Architecture"]
 
-        diskDict = {}
+        diskList = []
         for part in psutil.disk_partitions():
             mountPoint = part.mountpoint
             diskUsage = psutil.disk_usage(mountPoint)
             diskUsageDict = {}
             diskUsageDict["total"] = round(toGB(diskUsage.total), 3)
             diskUsageDict["percent"] = diskUsage.percent
-            diskDict[mountPoint] = diskUsageDict
+            diskUsageDict["mountPoint"] = mountPoint
+            diskUsageDict["device"] = part.device
+            diskList.append(diskUsageDict)
 
         platformDict = {}
         platformDict["version"] = platform.version()
@@ -166,7 +170,7 @@ class PerformanceInfo:
         resultDict["cpu"] = cpuDict
         resultDict["memory"] = memDict
         resultDict["io"] = ioDict
-        resultDict["disk"] = diskDict
+        resultDict["disk"] = diskList
         resultDict["platform"] = platformDict
 
         return resultDict
