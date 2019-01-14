@@ -18,7 +18,6 @@ def webapp(environ, start_response):
         response = {}
         query = parse_qs(environ.get('QUERY_STRING'))
         path = environ.get('PATH_INFO')
-        print("method:%s, query:%s, path:%s" %(method, query, path))
         if path.startswith("/performance/start_collecting") and query:
             task = {}
             duration = query.get('duration')

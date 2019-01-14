@@ -114,9 +114,7 @@ class PerformanceInfo:
 
     def start(self):
         self.__allCpuPercentList.append(self.__allCpuPercent())
-        print(self.__allCpuPercent())
         self.__cpuPercentList.append(self.__cpuPercentSum())
-        print(self.__cpuPercentSum())
         self.__memPercentList.append(self.__memPercent())
         self.__usedMemList.append(self.__usedMem())
         self.__freeMemList.append(self.__freeMem())
@@ -144,9 +142,9 @@ class PerformanceInfo:
         cpuDict["corePercent"] = self.__allCpuPercentList
 
         cpuInfo = g_sysInfoCollector.getCpuInfo()
-        cpuDict["model"] = cpuInfo["Model name"]
-        cpuDict["MHz"] = cpuInfo["CPU MHz"]
-        cpuDict["architecture"] = cpuInfo["Architecture"]
+        cpuDict["model"] = cpuInfo.get("Model name", "Unknown")
+        cpuDict["MHz"] = cpuInfo.get("CPU MHz", "Unknown")
+        cpuDict["architecture"] = cpuInfo.get("Architecture", "Unknown")
 
         diskList = []
         for part in psutil.disk_partitions():
