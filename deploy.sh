@@ -15,7 +15,4 @@ find . -iname "*.sh" | xargs chmod +x > /dev/null 2>&1
 find . -iname "*.py" | xargs chmod +x > /dev/null 2>&1
 find . -iname "*.sh" | xargs -i dos2unix -n {} {} > /dev/null 2>&1
 
-
-rsync -avP *.py $dst
-rsync -avP restart.sh $dst
-rsync -avP html/* $dst/html/
+rsync -avP *.py restart.sh html $dst
