@@ -64,5 +64,5 @@ git地址 (https://github.com/NavInfo2/system-monitor.git)。
 * IO实时读写次数
 
 ## 4. 在线信息展示图
-在部署完成后，即可通过http://<host>/nc/v1/system_monitor/去访问系统性能的在线展示图。
+在部署完成后，即可通过http://&lt;host&gt;/nc/v1/system_monitor/去访问系统性能的在线展示图。
 ![在线展示图](http://upload-images.jianshu.io/upload_images/16641961-ba363b935e429b81?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
