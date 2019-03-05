@@ -2,9 +2,65 @@ System info agent
 =================
 
 本工程用于采集服务器性能数据。
+(网站案例：http://211.159.171.115/nc/v1/system_monitor/)
+
+可在线查看服务器硬件信息，与性能实时信息。
+
+也可在压力测试过程中将数据同步至压测的发起方。
+
+部署
+====
+
+软件安装
+--------
+
+.. code-block:: shell
+
+    sudo apt-get install nginx
+    sudo apt-get install python2.7
+    sudo pip install flup==1.0
+    sudo pip install psutil
+
+nginx配置
+---------
+
+在/etc/nginx/sites-enabled/default的nginx配置中增加以下配置:
+
+.. code-block:: json
+
+    location ~ ^/system_monitor/api/v1(?<path_info>/.*)$
+    {   
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
+        fastcgi_param PATH_INFO $path_info;
+        fastcgi_pass unix:/etc/ncserver/system-monitor/.ncserver.sock;
+    }   
+    
+    location /nc/v1/system_monitor
+    {   
+        alias /etc/ncserver/system-monitor/html;
+        index index.html;
+    }   
+
+配置完成后重启软件
+
+.. code-block:: shell
+
+    sudo service nginx restart
+
+部署软件
+--------
+
+.. code-block:: shell
+
+    git clone git@github.com:NavInfo2/system-monitor.git
+    cd system-monitor
+    sudo ./deploy.sh
+    cd /etc/ncserver/system-monitor/
+    sudo python httpServer.py
 
 Depends
-===
+=======
 
 linux: lscpu
 
