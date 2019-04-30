@@ -4,3 +4,4 @@ tags
 dist/
 build/
 *.spec
+.vscode
