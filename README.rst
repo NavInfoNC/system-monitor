@@ -1,4 +1,4 @@
-System info agent 
+System info agent
 =================
 
 本工程用于采集服务器性能数据。
@@ -17,30 +17,30 @@ System info agent
 .. code-block:: shell
 
     sudo apt-get install nginx
-    sudo apt-get install python2.7
-    sudo pip install flup==1.0
-    sudo pip install psutil
+    sudo apt-get install python-dev
+    wget https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
+    sudo pip install flup==1.0 psutil
 
 nginx配置
 ---------
 
-在/etc/nginx/sites-enabled/default的nginx配置中增加以下配置:
+在 /etc/nginx/sites-enabled/default 的 nginx 配置中增加以下配置:
 
 .. code-block:: json
 
     location ~ ^/system_monitor/api/v1(?<path_info>/.*)$
-    {   
+    {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
         fastcgi_param PATH_INFO $path_info;
         fastcgi_pass unix:/etc/ncserver/system-monitor/.ncserver.sock;
-    }   
-    
+    }
+
     location /nc/v1/system_monitor
-    {   
+    {
         alias /etc/ncserver/system-monitor/html;
         index index.html;
-    }   
+    }
 
 配置完成后重启软件
 
@@ -53,7 +53,7 @@ nginx配置
 
 .. code-block:: shell
 
-    git clone git@github.com:NavInfo2/system-monitor.git
+    git clone https://github.com/NavInfoNC/system-monitor.git
     cd system-monitor
     sudo ./deploy.sh
     cd /etc/ncserver/system-monitor/
@@ -91,7 +91,7 @@ Request::
 Response:
 
 .. code-block:: jss
-   
+
     {
         "result":"succeeded/failed",
     }
@@ -110,14 +110,14 @@ Request::
 Response:
 
 .. code-block:: jss
-   
+
     {
         "result":"succeeded/failed",
         "system":PerformanceInfo,
         "process":PerformanceInfo
     }
 
-    PerformanceInfo = 
+    PerformanceInfo =
     {
         "cpu":CpuInfo
         "memory":MemoryInfo
@@ -126,7 +126,7 @@ Response:
         "platform":PlatformInfo
     }
 
-    CpuInfo = 
+    CpuInfo =
     {
         "percent":[],
         "coreNum":
@@ -136,7 +136,7 @@ Response:
         "MHz":
     }
 
-    MemoryInfo = 
+    MemoryInfo =
     {
         "percent":[],
         "used":[],

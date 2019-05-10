@@ -29,9 +29,14 @@ class SystemInfoCollector:
         p = os.popen("lscpu")
         line = p.readline()
         while(line):
-            info = line.split(":")
-            key = info[0]
-            value = info[1].strip()
+            line = line.decode('utf-8')
+            infos = line.split(':')
+            if len(infos) == 0:
+                infos = line.split('：')
+            if len(infos) == 0:
+                continue
+            key = infos[0]
+            value = infos[1].strip()
             self.__cpu_info[key] = value
             line = p.readline()
 
