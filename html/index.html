@@ -18,6 +18,14 @@ limitations under the License. -->
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
+        .header {
+            background: #417ab6;
+            height: 40px;
+            line-height: 40px;
+            margin: 0 0 10px 0;
+			padding: 0 0 0 10px;
+			color: white;
+         }
         .data-view {
             float: left;
             margin: 4px;
@@ -31,6 +39,11 @@ limitations under the License. -->
         	margin-left: 15px;
     		margin-right: 15px;
         }
+        .view-content{
+            background: #EEEEEE;
+			height: 100%;
+  			min-height: 100%;
+        }
         </style>
         <script src="./jquery-3.3.1.js"></script>
         <script src="./bootstrap.min.js"></script>
@@ -39,22 +52,67 @@ limitations under the License. -->
         <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
         <script src="https://img.hcharts.cn/highcharts/themes/sand-signika.js"></script>
     </head>
-    <body class="page">
-        <div class="row page-header">
-            <div id="platform" class="col-md-4"></div>
-            <div id="general" class="col-md-4"></div>
-            <div id="disk" class="col-md-4"></div>
+    <body>
+        <div class="header">
+           NaviCore System Performance Monitor
+        </div>
+        <div class="page">
+            <div id="platform" class="col-md-4">
+                <div class="panel panel-primary">
+	                <div class="panel panel-heading">
+	                    <strong>Platform Info</strong>
+	                </div>
+	                <div class="panel panel-body">
+	                <p><strong>hostname :</strong> VM-0-13-ubuntu</p>
+	                <p><strong>system :</strong> Linux</p>
+	                <p><strong>release :</strong> 4.4.0-91-generic</p>
+	                <p><strong>distribution :</strong> Ubuntu16.04xenial</p>
+	                </div>
+                </div>
+            </div>
+            <div id="general" class="col-md-4">
+                <div class="panel panel-primary">
+	                <div class="panel panel-heading">
+	                    <strong>General Info</strong>
+	                </div>
+	                <div class="panel panel-body">
+	                <p><strong>CPU Model :</strong> Intel(R) Xeon(R) CPU E5-26xx v4</p>
+	                <p><strong>CPU MHz :</strong> 2394.446 MHz</p>
+	                <p><strong>CPU architecture :</strong> x86_64</p>
+	                <p><strong>CPU(s) :</strong> 1</p>
+	                <p><strong>MEM total :</strong> 1.828 GB</p>
+	                </div>
+                </div>
+            </div>
+            <div id="disk" class="col-md-4">
+                <div class="panel panel-primary">
+	                <div class="panel panel-heading">
+	                    <strong>Disk Info</strong>
+	                </div>
+	                <div id="disk-body" class="panel panel-body">
+	                <p>Usage of <strong>/ :</strong> 28.8% of 49.089 GB</p>
+	                </div>
+                </div>
+            </div>
         </div>
         <div class="row">
             <div class="col-md-12">
-                <div id="cpu" class="data-view"></div>
-                <div id="mem" class="data-view"></div>
-                <div id="ioByte" class="data-view"></div>
-                <div id="ioCount" class="data-view"></div>
+                <div id="cpu" class="data-view">
+                    <div class="view-content"></div>
+                </div>
+                <div id="mem" class="data-view">
+                    <div class="view-content"></div>
+                </div>
+                <div id="ioByte" class="data-view">
+                    <div class="view-content"></div>
+                </div>
+                <div id="ioCount" class="data-view">
+                    <div class="view-content"></div>
+                </div>
             </div>
         </div>
     </body>
-    <script>
+	<script>
     Highcharts.setOptions({
         global: {
             useUTC: false
@@ -64,7 +122,7 @@ limitations under the License. -->
         var points = chart.series[j].points;
         chart.tooltip.refresh(points[points.length -1]);
     }
-   
+
     function generateSeries(id, content) {
         return {
             name: id,
@@ -80,7 +138,7 @@ limitations under the License. -->
             }())
         }
     }
-    
+
     function generateStyle(type) {
         var seriesData = []
         var srcData
@@ -138,7 +196,7 @@ limitations under the License. -->
                 }
             },
             title: {
-                text: title 
+                text: title
             },
             xAxis: {
                 type: 'datetime',
@@ -166,12 +224,12 @@ limitations under the License. -->
             series: seriesData
         }
     }
-    
+
     var g_interval = 1000
     var g_totalTime = 5 * 60
     var g_hostname = window.location.hostname;
     var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time"
-    
+
     var g_cpuData = [0]
     var g_memData = [0]
     var g_ioByte = [0]
@@ -179,7 +237,7 @@ limitations under the License. -->
     var g_ioLastByte = [0]
     var g_ioLastCount = [0]
     var g_cpuNumber = 0;
-    
+
     (function (H) {
         H.wrap(H.Tooltip.prototype, 'refresh', function (proceed, point, e) {
             if (e && e.type == 'mousemove') {
@@ -187,16 +245,16 @@ limitations under the License. -->
             }
         });
     }(Highcharts))
-    
+
     var g_start = true
     var g_haveBaseData = false
 
     var webCallback = function (body, status, jq) {
-        //At first, prepare base data for io 
+        //At first, prepare base data for io
         if (!g_haveBaseData) {
-            g_ioLastByte[0] = body.system.io.readSize[0] 
+            g_ioLastByte[0] = body.system.io.readSize[0]
             g_ioLastByte[1] = body.system.io.writeSize[0]
-            g_ioLastCount[0] = body.system.io.readCount[0] 
+            g_ioLastCount[0] = body.system.io.readCount[0]
             g_ioLastCount[1] = body.system.io.writeCount[0]
             g_haveBaseData = true
             startDraw()
@@ -208,17 +266,17 @@ limitations under the License. -->
         for (var i = 1; i <= g_cpuNumber; i++) {
             g_cpuData[i] = body.system.cpu.corePercent[0][i - 1]
         }
-    
+
         g_memData[0] = body.system.memory.percent[0]
 
         g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
         g_ioByte[1] = body.system.io.writeSize[0] - g_ioLastByte[1]
-        g_ioLastByte[0] = body.system.io.readSize[0] 
+        g_ioLastByte[0] = body.system.io.readSize[0]
         g_ioLastByte[1] = body.system.io.writeSize[0]
 
         g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
         g_ioCount[1] = body.system.io.writeCount[0] - g_ioLastCount[1]
-        g_ioLastCount[0] = body.system.io.readCount[0] 
+        g_ioLastCount[0] = body.system.io.readCount[0]
         g_ioLastCount[1] = body.system.io.writeCount[0]
 
         setTimeout(startDraw, g_interval);
@@ -239,11 +297,11 @@ limitations under the License. -->
                 <p><strong>CPU MHz :</strong> ${body.system.cpu.MHz} MHz</p>
                 <p><strong>CPU architecture :</strong> ${body.system.cpu.architecture}</p>
                 <p><strong>CPU(s) :</strong> ${body.system.cpu.coreNum}</p>
-                <p><strong>MEM total :</strong> ${body.system.memory.total} GB</p>
+                <p><strong>Mem total :</strong> ${body.system.memory.total} GB</p>
                 </div>
                 </div>
             `
-            $('#general').append($(generalString))
+            $('#general').html(generalString);
 
             var diskString = `
                 <div class="panel panel-primary">
@@ -254,7 +312,8 @@ limitations under the License. -->
                 </div>
                 </div>
             `
-            $('#disk').append($(diskString))
+            $('#disk').html(diskString)
+
             for (key in body.system.disk) {
                 var diskPartition = `<p>Usage of <strong>${body.system.disk[key].mountPoint} :</strong> ${body.system.disk[key].percent}% of ${body.system.disk[key].total} GB</p>`
                 $('#disk-body').append($(diskPartition))
@@ -266,14 +325,14 @@ limitations under the License. -->
                     <strong>Platform Info</strong>
                 </div>
                 <div class="panel panel-body">
-                <p><strong>hostname :</strong> ${body.system.platform.hostname}</p>
-                <p><strong>system :</strong> ${body.system.platform.system}</p>
-                <p><strong>release :</strong> ${body.system.platform.release}</p>
-                <p><strong>distribution :</strong> ${body.system.platform.distribution}</p>
+                <p><strong>Hostname :</strong> ${body.system.platform.hostname}</p>
+                <p><strong>System :</strong> ${body.system.platform.system}</p>
+                <p><strong>Release :</strong> ${body.system.platform.release}</p>
+                <p><strong>Distribution :</strong> ${body.system.platform.distribution}</p>
                 </div>
                 </div>
             `
-            $('#platform').append($(platformString))
+            $('#platform').html(platformString)
         }
     }
     var startDraw = function () {
@@ -281,13 +340,9 @@ limitations under the License. -->
             url: g_apiHost,
             dataType: "json",
             success: webCallback,
-            error: function () {
-                alert("Request had failed, will retry after you press ok")
-                    location.reload();
-            }
         });
     };
-    
+
     startDraw();
     </script>
 </html>
