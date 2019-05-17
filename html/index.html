@@ -98,16 +98,17 @@ limitations under the License. -->
             title = "Memory Utilization"
             yMax = 100
         }else if (type == 'ioByte') {
-            unit = 'MB'
+            unit = 'MB/s'
             seriesData.push(generateSeries('read size', 0))
             seriesData.push(generateSeries('write size', 0))
             srcData = g_ioByte
-            title = "IO R/W Size(MB)"
+            title = "IO R/W Size(MB) per second"
         }else if (type == 'ioCount') {
+            unit = '/s'
             seriesData.push(generateSeries('read count', 0))
             seriesData.push(generateSeries('write count', 0))
             srcData = g_ioCount
-            title = "IO R/W Count"
+            title = "IO R/W Count per second"
         }
         return {
             chart: {
