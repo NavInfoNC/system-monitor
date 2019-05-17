@@ -102,13 +102,13 @@ limitations under the License. -->
             seriesData.push(generateSeries('read size', 0))
             seriesData.push(generateSeries('write size', 0))
             srcData = g_ioByte
-            title = "IO R/W Size(MB) per second"
+            title = "IO R/W Size(MB) Per Second"
         }else if (type == 'ioCount') {
             unit = '/s'
             seriesData.push(generateSeries('read count', 0))
             seriesData.push(generateSeries('write count', 0))
             srcData = g_ioCount
-            title = "IO R/W Count per second"
+            title = "IO R/W Count Per Second"
         }
         return {
             chart: {
