@@ -191,14 +191,20 @@ limitations under the License. -->
         }
     
         g_memData[0] = body.system.memory.percent[0]
+
+        if (!g_start) {
+            g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
+            g_ioByte[1] = body.system.io.writeSize[0] - g_ioLastByte[1]
+
+            g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
+            g_ioCount[1] = body.system.io.writeCount[0] - g_ioLastCount[1]
+        } else {
+            g_ioByte[0] = g_ioByte[1] = g_ioCount[0] = g_ioCount[1] = 0
+        }
     
-        g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
-        g_ioByte[1] = body.system.io.writeSize[0] - g_ioLastByte[1]
         g_ioLastByte[0] = body.system.io.readSize[0] 
         g_ioLastByte[1] = body.system.io.writeSize[0]
     
-        g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
-        g_ioCount[1] = body.system.io.writeCount[0] - g_ioLastCount[1]
         g_ioLastCount[0] = body.system.io.readCount[0] 
         g_ioLastCount[1] = body.system.io.writeCount[0]
     
