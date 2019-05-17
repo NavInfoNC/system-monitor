@@ -18,13 +18,18 @@ limitations under the License. -->
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-        .zone {
+        .data-view {
             float: left;
-            margin: 0px;
+            margin: 4px;
             padding: 0px;
             border: 0px;
             width: 49%;
-            height: 500;
+            min-width:400px;
+            height:300px;
+        }
+        .page {
+        	margin-left: 15px;
+    		margin-right: 15px;
         }
         </style>
         <script src="./jquery-3.3.1.js"></script>
@@ -34,7 +39,7 @@ limitations under the License. -->
         <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
         <script src="https://img.hcharts.cn/highcharts/themes/sand-signika.js"></script>
     </head>
-    <body>
+    <body class="page">
         <div class="row page-header">
             <div id="platform" class="col-md-4"></div>
             <div id="general" class="col-md-4"></div>
@@ -42,10 +47,10 @@ limitations under the License. -->
         </div>
         <div class="row">
             <div class="col-md-12">
-                <div id="cpu" style="min-width:400px;height:300px" class="zone"></div>
-                <div id="mem" style="min-width:400px;height:300px" class="zone"></div>
-                <div id="ioByte" style="min-width:400px;height:300px" class="zone"></div>
-                <div id="ioCount" style="min-width:400px;height:300px" class="zone"></div>
+                <div id="cpu" class="data-view"></div>
+                <div id="mem" class="data-view"></div>
+                <div id="ioByte" class="data-view"></div>
+                <div id="ioCount" class="data-view"></div>
             </div>
         </div>
     </body>
@@ -59,7 +64,7 @@ limitations under the License. -->
         var points = chart.series[j].points;
         chart.tooltip.refresh(points[points.length -1]);
     }
-    
+   
     function generateSeries(id, content) {
         return {
             name: id,
