@@ -122,7 +122,7 @@ limitations under the License. -->
         var points = chart.series[j].points;
         chart.tooltip.refresh(points[points.length -1]);
     }
-   
+
     function generateSeries(id, content) {
         return {
             name: id,
@@ -138,7 +138,7 @@ limitations under the License. -->
             }())
         }
     }
-    
+
     function generateStyle(type) {
         var seriesData = []
         var srcData
@@ -196,7 +196,7 @@ limitations under the License. -->
                 }
             },
             title: {
-                text: title 
+                text: title
             },
             xAxis: {
                 type: 'datetime',
@@ -224,12 +224,12 @@ limitations under the License. -->
             series: seriesData
         }
     }
-    
+
     var g_interval = 1000
     var g_totalTime = 5 * 60
     var g_hostname = window.location.hostname;
     var g_apiHost = "http://" + g_hostname + "/system_monitor/api/v1" + "/performance/real_time"
-    
+
     var g_cpuData = [0]
     var g_memData = [0]
     var g_ioByte = [0]
@@ -237,7 +237,7 @@ limitations under the License. -->
     var g_ioLastByte = [0]
     var g_ioLastCount = [0]
     var g_cpuNumber = 0;
-    
+
     (function (H) {
         H.wrap(H.Tooltip.prototype, 'refresh', function (proceed, point, e) {
             if (e && e.type == 'mousemove') {
@@ -245,16 +245,16 @@ limitations under the License. -->
             }
         });
     }(Highcharts))
-    
+
     var g_start = true
     var g_haveBaseData = false
 
     var webCallback = function (body, status, jq) {
-        //At first, prepare base data for io 
+        //At first, prepare base data for io
         if (!g_haveBaseData) {
-            g_ioLastByte[0] = body.system.io.readSize[0] 
+            g_ioLastByte[0] = body.system.io.readSize[0]
             g_ioLastByte[1] = body.system.io.writeSize[0]
-            g_ioLastCount[0] = body.system.io.readCount[0] 
+            g_ioLastCount[0] = body.system.io.readCount[0]
             g_ioLastCount[1] = body.system.io.writeCount[0]
             g_haveBaseData = true
             startDraw()
@@ -266,17 +266,17 @@ limitations under the License. -->
         for (var i = 1; i <= g_cpuNumber; i++) {
             g_cpuData[i] = body.system.cpu.corePercent[0][i - 1]
         }
-    
+
         g_memData[0] = body.system.memory.percent[0]
 
         g_ioByte[0] = body.system.io.readSize[0] - g_ioLastByte[0]
         g_ioByte[1] = body.system.io.writeSize[0] - g_ioLastByte[1]
-        g_ioLastByte[0] = body.system.io.readSize[0] 
+        g_ioLastByte[0] = body.system.io.readSize[0]
         g_ioLastByte[1] = body.system.io.writeSize[0]
 
         g_ioCount[0] = body.system.io.readCount[0] - g_ioLastCount[0]
         g_ioCount[1] = body.system.io.writeCount[0] - g_ioLastCount[1]
-        g_ioLastCount[0] = body.system.io.readCount[0] 
+        g_ioLastCount[0] = body.system.io.readCount[0]
         g_ioLastCount[1] = body.system.io.writeCount[0]
 
         setTimeout(startDraw, g_interval);
@@ -301,7 +301,7 @@ limitations under the License. -->
                 </div>
                 </div>
             `
-            $('#general').html = $(generalString);
+            $('#general').html(generalString);
 
             var diskString = `
                 <div class="panel panel-primary">
@@ -312,7 +312,7 @@ limitations under the License. -->
                 </div>
                 </div>
             `
-            $('#disk').html = $(diskString)
+            $('#disk').html(diskString)
 
             for (key in body.system.disk) {
                 var diskPartition = `<p>Usage of <strong>${body.system.disk[key].mountPoint} :</strong> ${body.system.disk[key].percent}% of ${body.system.disk[key].total} GB</p>`
@@ -332,7 +332,7 @@ limitations under the License. -->
                 </div>
                 </div>
             `
-            $('#platform').html = $(platformString)
+            $('#platform').html(platformString)
         }
     }
     var startDraw = function () {
@@ -342,7 +342,7 @@ limitations under the License. -->
             success: webCallback,
         });
     };
-    
+
     startDraw();
     </script>
 </html>
