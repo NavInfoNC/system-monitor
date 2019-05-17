@@ -1,18 +1,19 @@
-System info agent
-=================
+NaviCore System Performance Monitor
+===================================
 
-本工程用于采集服务器性能数据。
-(网站案例：http://211.159.171.115/nc/v1/system_monitor/)
+A web service to monitor realtime system performance.
 
-可在线查看服务器硬件信息，与性能实时信息。
+It provides both HTML pages and APIs.
 
-也可在压力测试过程中将数据同步至压测的发起方。
+.. image:: docs/images/screenshot.png
+
+An example site: http://211.159.171.115/nc/v1/system_monitor/
 
 部署
-====
+----
 
 软件安装
---------
+........
 
 .. code-block:: shell
 
@@ -21,8 +22,8 @@ System info agent
     wget https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
     sudo pip install flup==1.0 psutil
 
-nginx配置
----------
+Nginx配置
+.........
 
 在 /etc/nginx/sites-enabled/default 的 nginx 配置中增加以下配置:
 
@@ -49,7 +50,7 @@ nginx配置
     sudo service nginx restart
 
 部署软件
---------
+........
 
 .. code-block:: shell
 
@@ -59,15 +60,15 @@ nginx配置
     cd /etc/ncserver/system-monitor/
     sudo python httpServer.py
 
-Depends
-=======
+Dependency
+----------
 
 linux: lscpu
 
 python-lib: psutil, flup1.0
 
 API
-===
+---
 
 前缀 PREFIX 为::
 
